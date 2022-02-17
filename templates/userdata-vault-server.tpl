@@ -266,30 +266,30 @@ echo "${address} ${name}" | sudo tee -a /etc/hosts
 #   the same data.
 sleep 5
 logger "Initializing Vault and storing results for ubuntu user"
-echo "start manually"
-#vault operator init -recovery-shares 1 -recovery-threshold 1 -format=json > /tmp/key.json
-#sudo chown ubuntu:ubuntu /tmp/key.json
 
-#logger "Saving root_token and recovery key to ubuntu user's home"
-#VAULT_TOKEN=$(cat /tmp/key.json | jq -r ".root_token")
-#echo $VAULT_TOKEN > /home/ubuntu/root_token
-#sudo chown ubuntu:ubuntu /home/ubuntu/root_token
-#echo $VAULT_TOKEN > /home/ubuntu/.vault-token
-#sudo chown ubuntu:ubuntu /home/ubuntu/.vault-token
+vault operator init -recovery-shares 1 -recovery-threshold 1 -format=json > /tmp/key.json
+sudo chown ubuntu:ubuntu /tmp/key.json
 
-#echo $(cat /tmp/key.json | jq -r ".recovery_keys_b64[]") > /home/ubuntu/recovery_key
-#sudo chown ubuntu:ubuntu /home/ubuntu/recovery_key
+logger "Saving root_token and recovery key to ubuntu user's home"
+VAULT_TOKEN=$(cat /tmp/key.json | jq -r ".root_token")
+echo $VAULT_TOKEN > /home/ubuntu/root_token
+sudo chown ubuntu:ubuntu /home/ubuntu/root_token
+echo $VAULT_TOKEN > /home/ubuntu/.vault-token
+sudo chown ubuntu:ubuntu /home/ubuntu/.vault-token
 
-#logger "Setting VAULT_ADDR and VAULT_TOKEN"
-#export VAULT_ADDR=http://127.0.0.1:8200
-#export VAULT_TOKEN=$VAULT_TOKEN
+echo $(cat /tmp/key.json | jq -r ".recovery_keys_b64[]") > /home/ubuntu/recovery_key
+sudo chown ubuntu:ubuntu /home/ubuntu/recovery_key
 
-#logger "Waiting for Vault to finish preparations (10s)"
-#sleep 10
+logger "Setting VAULT_ADDR and VAULT_TOKEN"
+export VAULT_ADDR=http://127.0.0.1:8200
+export VAULT_TOKEN=$VAULT_TOKEN
 
-#logger "Enabling kv-v2 secrets engine and inserting secret"
-#vault secrets enable -path=kv kv-v2
-#vault kv put kv/apikey webapp=ABB39KKPTWOR832JGNLS02
-#%{ endif }
+logger "Waiting for Vault to finish preparations (10s)"
+sleep 10
 
-#logger "Complete"
+logger "Enabling kv-v2 secrets engine and inserting secret"
+vault secrets enable -path=kv kv-v2
+vault kv put kv/apikey webapp=ABB39KKPTWOR832JGNLS02
+%{ endif }
+
+logger "Complete"
