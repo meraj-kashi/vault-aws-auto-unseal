@@ -18,21 +18,10 @@ resource "aws_iam_role_policy" "vault-server" {
   policy = data.aws_iam_policy_document.vault-server.json
 }
 
-# Vault Client IAM Config
-resource "aws_iam_instance_profile" "vault-transit" {
-  name = "${var.environment_name}-vault-transit-instance-profile"
-  role = aws_iam_role.vault-transit.name
-}
-
-resource "aws_iam_role" "vault-transit" {
-  name               = "${var.environment_name}-vault-transit-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
-
-resource "aws_iam_role_policy" "vault-transit" {
-  name   = "${var.environment_name}-vault-transit-role-policy"
-  role   = aws_iam_role.vault-transit.id
-  policy = data.aws_iam_policy_document.vault-transit.json
+# Generic Cloudwatch logging policy attachment
+resource "aws_iam_role_policy_attachment" "vault-server_logging" {
+  role       = aws_iam_role.vault-server.id
+  policy_arn = aws_iam_policy.generic_cloudwatch_logging_policy.arn
 }
 
 //--------------------------------------------------------------------
@@ -106,4 +95,28 @@ data "aws_iam_policy_document" "vault-transit" {
 
     resources = ["*"]
   }
+}
+
+# Generic policy for allowing to send logs to CloudWatch.
+resource "aws_iam_policy" "generic_cloudwatch_logging_policy" {
+  name        = "generic_cloudwatch_logging_policy"
+  description = "Generic policy for Cloudwatch logging"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:CreateLogGroup",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    }
+  ]
+}
+EOF
 }

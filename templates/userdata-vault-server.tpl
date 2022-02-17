@@ -292,4 +292,41 @@ vault secrets enable -path=kv kv-v2
 vault kv put kv/apikey webapp=ABB39KKPTWOR832JGNLS02
 %{ endif }
 
-logger "Complete"
+logger "install CloudWatch agent"
+sudo touch /home/ubuntu/amazon-cloudwatch-agent.json
+sudo chown ubuntu:ubuntu /home/ubuntu/amazon-cloudwatch-agent.json
+
+sudo tee /home/ubuntu/amazon-cloudwatch-agent.json <<EOF
+{
+    "logs": {
+        "logs_collected": {
+            "files": {
+                "collect_list": [
+                    {
+                        "file_path": "/var/log/vault/vault_audit.log",
+                        "log_group_name": "/aws/ec2/private-vault",
+                        "log_stream_name": "{instance_id}",
+                        "timezone": "UTC"
+                    }
+                ]
+            }
+        },
+        "force_flush_interval": 15
+    }
+}
+EOF
+
+echo "Install AWS Cloudwatch agent"
+
+curl -s https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb --output ./amazon-cloudwatch-agent.deb
+
+sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+
+# Config AWS Cloudwatch agent
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/home/ubuntu/amazon-cloudwatch-agent.json
+
+# Enable service but dont start because Vault audit log direcory has not been created yet
+# Service will be enable with Terraform userdata script
+sudo systemctl enable amazon-cloudwatch-agent.service
+
+logger "complete"
