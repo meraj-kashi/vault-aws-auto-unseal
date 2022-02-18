@@ -1,7 +1,6 @@
 # Create a Vault HA cluster on AWS using Terraform
-
-These assets are provided to perform the tasks described in the [Vault HA Cluster with Integrated Storage on AWS](https://learn.hashicorp.com/vault/operations/raft-storage-aws) guide.
-
+In the latest changes, The vault clutser initialized automatically, and Raft follower nodes will join to cluster automatically.  
+The below procedure shows the steps to init and join manually!  
 ---
 
 1.  Set your AWS credentials as environment variables:
