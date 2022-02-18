@@ -292,6 +292,16 @@ vault secrets enable -path=kv kv-v2
 vault kv put kv/apikey webapp=ABB39KKPTWOR832JGNLS02
 %{ endif }
 
+%{ if tpl_vault_node_name == "vault_3" }
+sleep 30
+vault operator raft join http://vault_2:8200
+%{ endif }
+
+%{ if tpl_vault_node_name == "vault_4" }
+sleep 30
+vault operator raft join http://vault_2:8200
+%{ endif }
+
 logger "install CloudWatch agent"
 sudo touch /home/ubuntu/amazon-cloudwatch-agent.json
 sudo chown ubuntu:ubuntu /home/ubuntu/amazon-cloudwatch-agent.json
