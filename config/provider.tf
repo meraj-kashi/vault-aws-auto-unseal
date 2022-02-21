@@ -8,5 +8,6 @@ terraform {
 }
 
 provider "vault" {
-  address = "http://13.51.178.135:8200/"
+  address = "http://13.51.55.252:8200"
+  token   = "s.8hBusHH0OmfoXT52wG9QT1x7"
 }

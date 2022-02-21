@@ -255,6 +255,9 @@ fi
 sudo systemctl enable vault
 sudo systemctl start vault
 
+# Audit log
+sudo mkdir -pm 0755 /var/log/vault
+sudo chown -R vault:vault /var/log/vault
 ##-------------------------------------------------------------------
 ## Set up aliases to ease networking to each node
 %{ for address, name in tpl_vault_node_address_names  ~}
