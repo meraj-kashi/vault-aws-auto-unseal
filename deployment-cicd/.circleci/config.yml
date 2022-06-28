@@ -1,0 +1,100 @@
+version: 2.1
+orbs:
+  vault_auth:
+
+jobs:
+  auth:
+    docker:
+      - image: vault:1.9.3
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - hvelv_auth/aws-creds:
+          circleci_project_name: $CIRCLE_PROJECT_REPONAME
+          vault_project_name: shared
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - "*"
+
+  execute_terraform:
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    parameters:
+      action:
+        type: string
+    steps:
+      - checkout
+      - hvelv_auth/tunnel
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Execute Terraform
+          command: |
+            # Export saved credentials to variables
+            echo 'Exporting saved credentials to variables...'
+            export AWS_ACCESS_KEY_ID=$(cat /tmp/aws_access_key_id)
+            export AWS_SECRET_ACCESS_KEY=$(cat /tmp/aws_secret_access_key)
+
+            # Export Vault root token
+            export VAULT_TOKEN=$VAULT_ROOT_TOKEN
+            export VAULT_SKIP_VERIFY=1
+
+            # Update Git submodules
+            #echo 'Updating Git submodules...'
+            #git submodule update --init --recursive
+
+            # Terraform initialization
+            echo 'Executing terraform init...'
+            terraform init
+
+            # Terraform plan/apply command execution
+            ACTION="<< parameters.action >>"
+            if [[ "$ACTION" == "plan" ]]
+            then
+              echo 'Executing terraform plan with output to tf-plan file...'
+              terraform plan -out /tmp/tf-plan
+            elif [[ "$ACTION" == "apply" ]]
+            then
+              echo 'Executing terraform apply based on tf-plan file...'
+              terraform apply /tmp/tf-plan
+            else
+              echo 'ACTION contains no valid input plan/apply. Terraform will not be executed.'
+            fi
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - "*"
+workflows:
+  version: 2
+  terraform_plan_approve_apply:
+    jobs:
+      - auth:
+          context:
+            - vault-bastion-access-iam-user
+          filters:
+            branches:
+              only:
+                - prod
+      - execute_terraform:
+          name: terraform_plan
+          action: plan
+          requires:
+            - auth
+          context:
+            - vault-bastion-access-iam-user
+      - request_approval:
+          type: approval
+          requires:
+            - terraform_plan
+      - execute_terraform:
+          name: terraform_apply
+          action: apply
+          requires:
+            - request_approval
+          context:
+            - vault-bastion-access-iam-user
+          filters:
+            branches:
+              only:
+                - prod

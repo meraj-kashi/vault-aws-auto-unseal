@@ -33,6 +33,6 @@ resource "aws_instance" "vault-server" {
   }
 
   lifecycle {
-    ignore_changes = [ami, tags]
+    ignore_changes = [tags]
   }
 }

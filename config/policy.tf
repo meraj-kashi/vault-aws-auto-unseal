@@ -17,3 +17,23 @@ resource "vault_policy" "test" {
     }
     EOT
 }
+
+# policies
+resource "vault_policy" "admin" {
+  name = "admin"
+
+  policy = <<EOT
+    path "admin/*" {
+      capabilities = ["create", "read", "update", "delete", "list"]
+    }
+    path "auth/admin/*" {
+      capabilities = ["create", "read", "update", "delete", "list"]
+    }
+    path "sl18/prod/aws/creds/list" {
+      capabilities = ["create", "read", "update", "delete", "list"]
+    }
+    path "sl18/prod/aws/roles" {
+        capabilities = ["list"]
+    }
+    EOT
+}
